@@ -21,9 +21,9 @@ private:
 
 private slots: //slots are excuted when signal is submitted
     void NumPressed();
-    //void MathButtonPressed();
-    //void EqualButton();
-    //void ChangeNumberSign();
+    void MathButtonPressed();
+    void EqualButtonPressed();
+    void ChangeNumberSign();
 };
 
 #endif // CALCULATOR_H
