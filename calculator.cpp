@@ -2,10 +2,18 @@
 #include "ui_calculator.h"
 
 double dTrackCurrentValue = 0.0;
+double dMemoryValue = 0.0;
+
 bool bDivideTrigger = false;
 bool bMultiplyTrigger = false;
 bool bAddTrigger = false;
 bool bSubTrigger = false;
+
+bool bMemGetTrigger = false;
+bool bMemAddTrigger = false;
+bool bMemClearTrigger = false;
+
+bool bClearTrigger = false;
 
 Calculator::Calculator(QWidget *parent):
     QMainWindow(parent),
@@ -31,9 +39,12 @@ Calculator::Calculator(QWidget *parent):
     connect(ui->ButtonDivide, SIGNAL(released()), this, SLOT(MathButtonPressed()));
 
     connect(ui->ButtonEqual, SIGNAL(released()), this, SLOT(EqualButtonPressed()));
-
     connect(ui->ButtonChangeSign, SIGNAL(released()), this, SLOT(ChangeNumberSign()));
+    connect(ui->ButtonClear, SIGNAL(released()), this, SLOT(ClearButtonPressed()));
 
+    connect(ui->ButtonMemGet, SIGNAL(released()), this, SLOT(MemoryButtonPressed()));
+    connect(ui->ButtonMemAdd, SIGNAL(released()), this, SLOT(MemoryButtonPressed()));
+    connect(ui->ButtonMemClear, SIGNAL(released()), this, SLOT(MemoryButtonPressed()));
 }
 
 Calculator::~Calculator()
@@ -64,11 +75,6 @@ void Calculator::NumPressed()
 
 void Calculator::MathButtonPressed()
 {
-    bDivideTrigger = false;
-    bMultiplyTrigger = false;
-    bAddTrigger = false;
-    bSubTrigger = false;
-
     QString displayValue = ui->Display->text();
 
     //store value
@@ -83,9 +89,9 @@ void Calculator::MathButtonPressed()
         bDivideTrigger = true;
     else if(QString::compare(buttonValue, "×", Qt::CaseInsensitive) == 0)
         bMultiplyTrigger = true;
-    else if (QString::compare(buttonValue, "+", Qt::CaseInsensitive) == 0)
+    else if(QString::compare(buttonValue, "+", Qt::CaseInsensitive) == 0)
         bAddTrigger = true;
-    else
+    else if(QString::compare(buttonValue, "-", Qt::CaseInsensitive) == 0)
         bSubTrigger = true;
 
     //clear display, handles if math button is pressed
@@ -106,9 +112,14 @@ void Calculator::EqualButtonPressed()
             solution = dTrackCurrentValue - dDisplayValue;
         else if(bMultiplyTrigger)
             solution = dTrackCurrentValue * dDisplayValue;
-        else
+        else if(bDivideTrigger)
             solution = dTrackCurrentValue / dDisplayValue;
     }
+
+    bAddTrigger = false;
+    bSubTrigger = false;
+    bMultiplyTrigger = false;
+    bDivideTrigger = false;
 
     ui->Display->setText(QString::number(solution));
 }
@@ -118,7 +129,7 @@ void Calculator::ChangeNumberSign()
     QString displayValue = ui->Display->text();
 
     //regex to verify that what's being displayed is actually a number
-    QRegExp checkRegex("[-]?[0-9]*");
+    QRegExp checkRegex("[-+]?[0-9.]*");
 
     if(checkRegex.exactMatch(displayValue))
     {
@@ -126,8 +137,49 @@ void Calculator::ChangeNumberSign()
         double dDisplayValueSign = -1 * dDisplayValue;
         ui->Display->setText((QString::number(dDisplayValueSign)));
     }
+
 }
 
+void Calculator::ClearButtonPressed()
+{
+    dTrackCurrentValue = 0.0;
+
+    ui->Display->setText((QString::number(dTrackCurrentValue)));
+}
+
+void Calculator::MemoryButtonPressed()
+{
+    QString displayValue = ui->Display->text();
+
+    //check sender to find out the button that was pressed
+    QPushButton *button = (QPushButton *)sender();
+    QString buttonValue = button->text();
+
+    //check which of the buttons was actually pressed
+    if(QString::compare(buttonValue, "M+", Qt::CaseInsensitive) == 0)
+        bMemAddTrigger = true;
+    else if(QString::compare(buttonValue, "M", Qt::CaseInsensitive) == 0)
+        bMemGetTrigger = true;
+    else if((QString::compare(buttonValue, "M-", Qt::CaseInsensitive) == 0))
+        bMemClearTrigger = true;
+
+    if(bMemAddTrigger || bMemGetTrigger || bMemClearTrigger)
+    {
+        if(bMemAddTrigger)
+        dMemoryValue = displayValue.toDouble();
+        else if(bMemGetTrigger)
+        {
+            dTrackCurrentValue = dMemoryValue;
+            ui->Display->setText((QString::number(dTrackCurrentValue)));
+        }
+        else if(bMemClearTrigger)
+            dMemoryValue = 0.0;
+    }
+
+    bMemAddTrigger = false;
+    bMemGetTrigger = false;
+    bMemClearTrigger = false;
+}
 
 
 
